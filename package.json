@@ -1,48 +1,31 @@
 {
-  "name": "ai-voice-agent-sip",
-  "version": "1.0.0",
-  "description": "AI Voice Agent для дзвінків через SIP з OpenAI + ElevenLabs",
-  "main": "ai-voice-agent-complete.js",
-  "scripts": {
-    "start": "node ai-voice-agent-complete.js",
-    "start:v2": "node ai-voice-agent-v2-with-stt.js",
-    "dev": "nodemon ai-voice-agent-complete.js",
-    "dev:v2": "nodemon ai-voice-agent-v2-with-stt.js",
-    "scenario": "node scenarios.js",
-    "scenario:sales": "node scenarios.js sales",
-    "scenario:support": "node scenarios.js support",
-    "scenario:survey": "node scenarios.js survey",
-    "scenario:notification": "node scenarios.js notification",
-    "scenario:realestate": "node scenarios.js realestate",
-    "scenario:banking": "node scenarios.js banking",
-    "scenario:insurance": "node scenarios.js insurance",
-    "docker:build": "docker build -t ai-voice-agent .",
-    "docker:run": "docker run -d --name voice-agent --env-file .env ai-voice-agent",
-    "docker:compose": "docker-compose up -d",
-    "docker:logs": "docker logs -f ai-voice-agent",
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "name": "ai-voice-telephony",
+  "version": "4.0.0",
+  "description": "ElevenLabs Conversational AI Telephony System",
+  "main": "index.js",
+  "engines": {
+    "node": ">=18.0.0"
   },
-  "keywords": [
-    "ai",
-    "voice",
-    "sip",
-    "elevenlabs",
-    "openai",
-    "asterisk"
-  ],
-  "author": "",
-  "license": "MIT",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "call": "node scripts/make-call.js",
+    "docker:build": "docker build -t ai-voice-telephony .",
+    "docker:run": "docker run -d --name ai-voice --env-file .env --network host ai-voice-telephony",
+    "docker:logs": "docker logs -f ai-voice",
+    "docker:stop": "docker stop ai-voice && docker rm ai-voice",
+    "compose:up": "docker-compose up -d",
+    "compose:down": "docker-compose down",
+    "compose:logs": "docker-compose logs -f ai-agent"
+  },
   "dependencies": {
-    "sip.js": "^0.21.2",
-    "axios": "^1.6.2",
-    "dotenv": "^16.3.1",
-    "ws": "^8.14.2",
-    "jssip": "^3.9.1"
+    "axios": "^1.7.9",
+    "dotenv": "^16.4.7",
+    "form-data": "^4.0.1",
+    "ws": "^8.18.0"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1"
+    "nodemon": "^3.1.9"
   },
-  "engines": {
-    "node": ">=16.0.0"
-  }
+  "license": "MIT"
 }

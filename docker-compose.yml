@@ -1,46 +1,49 @@
 version: '3.8'
 
 services:
-  ai-voice-agent:
+  # ─────────────────────────────────────────────────────────────
+  # ASTERISK PBX — обробка SIP/телефонії
+  # ─────────────────────────────────────────────────────────────
+  asterisk:
+    image: andrius/asterisk
+    container_name: asterisk-pbx
+    restart: unless-stopped
+    ports:
+      - "5060:5060/udp"
+      - "5060:5060/tcp"
+      - "10000-10099:10000-10099/udp"
+    volumes:
+      - ./asterisk/extensions.conf:/etc/asterisk/extensions.conf:ro
+      - ./asterisk/pjsip.conf:/etc/asterisk/pjsip.conf:ro
+      - ./asterisk/manager.conf:/etc/asterisk/manager.conf:ro
+    environment:
+      - TZ=Europe/Kyiv
+    depends_on:
+      - ai-agent
+
+  # ─────────────────────────────────────────────────────────────
+  # AI AGENT — Node.js AudioSocket сервер
+  # ─────────────────────────────────────────────────────────────
+  ai-agent:
     build: .
     container_name: ai-voice-agent
-    restart: always
-    environment:
-      # SIP Конфігурація
-      - SIP_SERVER=62.149.25.79
-      - SIP_PORT=5168
-      - SIP_LOGIN=422
-      - SIP_PASSWORD=${SIP_PASSWORD}
-      
-      # ElevenLabs API
-      - ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY}
-      
-      # OpenAI API
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      
-      # Логування
-      - LOG_LEVEL=debug
-      - NODE_ENV=production
-    
+    restart: unless-stopped
     ports:
-      - "5060:5060/udp"  # SIP
-      - "5060:5060/tcp"  # SIP TCP
-      - "8088:8088"      # WebSocket
-    
-    volumes:
-      - ./logs:/app/logs
-    
-    networks:
-      - voice-network
-    
-    # Health check
+      - "3000:3000"
+      - "9093:9093"
+    env_file: .env
+    environment:
+      - NODE_ENV=production
+      - AUDIOSOCKET_PORT=9093
+      - AUDIOSOCKET_HOST=0.0.0.0
+      - HTTP_API=true
+      - API_PORT=3000
+      - AMI_ENABLED=true
+      - ASTERISK_HOST=asterisk-pbx
+      - AMI_PORT=5038
     healthcheck:
-      test: ["CMD", "node", "-e", "console.log('healthy')"]
+      test: ["CMD", "curl", "-f", "http://localhost:3000/status"]
       interval: 30s
-      timeout: 10s
+      timeout: 5s
       retries: 3
-      start_period: 40s
-
-networks:
-  voice-network:
-    driver: bridge
+      start_period: 10s

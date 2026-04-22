@@ -1,37 +1,32 @@
-# ============================================================================
-# Dockerfile для AI Voice Agent
-# Використання: docker build -t ai-voice-agent . && docker run -d ...
-# ============================================================================
+FROM node:20-alpine
 
-FROM node:18-alpine
-
-# Встановлення залежностей для аудіо
+# Системні залежності для аудіо
 RUN apk add --no-cache \
-    ffmpeg \
-    sox \
-    opus \
-    libopus
+    ca-certificates \
+    curl \
+    tzdata
+
+ENV TZ=Europe/Kyiv
 
 WORKDIR /app
 
-# Копіювання package файлів
+# Спочатку копіюємо package.json для кешування залежностей
 COPY package*.json ./
-
-# Встановлення залежностей
 RUN npm ci --only=production
 
-# Копіювання коду
-COPY ai-voice-agent-complete.js .
-COPY ai-voice-agent-v2-with-stt.js .
+# Копіюємо вихідний код
+COPY src/ ./src/
+COPY index.js ./
 
-# Встановлення змінних середовища
-ENV NODE_ENV=production
-ENV LOG_LEVEL=debug
+# Порти:
+# 9093 — AudioSocket (Asterisk → Node.js)
+# 3000 — HTTP REST API
+EXPOSE 9093
+EXPOSE 3000
 
-# Точка входу
-ENTRYPOINT ["node", "ai-voice-agent-complete.js"]
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD curl -f http://localhost:3000/status || exit 1
 
-# Метадані
-LABEL maintainer="Your Name"
-LABEL description="AI Voice Agent for SIP calls with OpenAI and ElevenLabs"
-LABEL version="1.0"
+USER node
+
+CMD ["node", "index.js"]
