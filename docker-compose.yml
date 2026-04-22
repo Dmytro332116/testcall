@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  ai-voice-agent:
+    build: .
+    container_name: ai-voice-agent
+    restart: always
+    environment:
+      # SIP Конфігурація
+      - SIP_SERVER=62.149.25.79
+      - SIP_PORT=5168
+      - SIP_LOGIN=422
+      - SIP_PASSWORD=${SIP_PASSWORD}
+      
+      # ElevenLabs API
+      - ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY}
+      
+      # OpenAI API
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      
+      # Логування
+      - LOG_LEVEL=debug
+      - NODE_ENV=production
+    
+    ports:
+      - "5060:5060/udp"  # SIP
+      - "5060:5060/tcp"  # SIP TCP
+      - "8088:8088"      # WebSocket
+    
+    volumes:
+      - ./logs:/app/logs
+    
+    networks:
+      - voice-network
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "node", "-e", "console.log('healthy')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  voice-network:
+    driver: bridge
